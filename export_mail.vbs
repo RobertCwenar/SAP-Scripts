@@ -1,3 +1,4 @@
+'Check and connect to SAP GUI Scripting engine
 If Not IsObject(application) Then
    Set SapGuiAuto  = GetObject("SAPGUI")
    Set application = SapGuiAuto.GetScriptingEngine
