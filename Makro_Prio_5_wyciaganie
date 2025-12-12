@@ -1,0 +1,67 @@
+Sub Makro_Prio_5_wyciagniecie()
+    Dim wbSource As Workbook
+    Dim wsSource As Worksheet
+    Dim wsDest As Worksheet
+    Dim wbPriority As Workbook
+    Dim lastRowSource As Long
+    Dim lastRowDest As Long
+    Dim sciezka As String
+    Dim vlookupFormula As String
+    
+    application.ScreenUpdating = False
+    
+    ' ---------- Skoroszyt źródłowy ----------
+    Set wbSource = ThisWorkbook
+    Set wsSource = ActiveWorkbook.Sheets("WYNIK")
+    
+    ' ---------- MsgBoxy instrukcyjne ----------
+    MsgBox "Przefiltruj odpowiednio kolumne PLANOWANIE.", vbInformation, "Instrukcja"
+    
+    ' ---------- Utwórz nowy skoroszyt i arkusz docelowy ----------
+    Dim wbDest As Workbook
+    Set wbDest = Workbooks.Add
+    Set wsDest = wbDest.Sheets(1)
+    
+    ' ---------- Ostatni wiersz w kolumnie J w źródle ----------
+    lastRowSource = wsSource.Cells(wsSource.Rows.Count, "T").End(xlUp).Row
+    
+    ' ---------- Skopiuj wartości J:T ----------
+    wsSource.Range("J3:T" & lastRowSource).Copy
+    wsDest.Range("A1").PasteSpecial Paste:=xlPasteValues
+    application.CutCopyMode = False
+    
+    ' ---------- Ostatni wiersz w arkuszu docelowym ----------
+    lastRowDest = wsDest.Cells(wsDest.Rows.Count, "A").End(xlUp).Row
+    
+    ' ---------- Usuń kolumny B:F ----------
+    wsDest.Columns("B:J").Delete Shift:=xlToLeft
+    
+    'Debug
+    ' Kopiuj wartości do nowego skoroszytu
+    'copyRange.Copy
+    'wsNew.Range("A1").PasteSpecial Paste:=xlPasteValues
+    'application.CutCopyMode = False
+    
+    ' Rozdziel tekst w kolumnie B w nowym skoroszycie
+    With wsDest.Columns("B:B")
+        .TextToColumns Destination:=.Cells(1, 1), DataType:=xlDelimited, _
+            TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=True, Tab:=True, _
+            Semicolon:=False, Comma:=False, Space:=True, Other:=True, OtherChar:="/", _
+            FieldInfo:=Array(Array(1, 9), Array(2, 1)), TrailingMinusNumbers:=True
+    End With
+    
+    'Ścieżka zapisu
+    filePath = "C:\Users\robert.cwenar\Documents\SAP\SAP GUI\" & _
+           "prio zlecenia " & Format(Date, "dd.mm.yyyy") & ".xlsx"
+    
+    ' Zapisz nowy skoroszyt
+    application.DisplayAlerts = False
+    wbDest.SaveAs filePath, FileFormat:=xlOpenXMLWorkbook
+    application.DisplayAlerts = True
+    MsgBox "Plik zapisany: " & filePath, vbInformation
+
+    application.ScreenUpdating = True
+End Sub
+
+
+
