@@ -1,4 +1,4 @@
-' Current date and unique file name
+'Current date and unique file name
 Dim dzien, miesiac, rok, dzis
 dzien = Right("0" & Day(Date), 2)
 miesiac = Right("0" & Month(Date), 2)
@@ -37,7 +37,7 @@ Dim SapGuiAuto, application, connection, potentialSession, sessionsList(), i, ch
 Set SapGuiAuto = GetObject("SAPGUI")
 Set application = SapGuiAuto.GetScriptingEngine
 
-'
+'Collect all active sessions
 ReDim sessionsList(0)
 i = 0
 For Each connection In application.Children
@@ -60,11 +60,12 @@ For i = 0 To UBound(sessionsList)
     msg = msg & i+1 & ". Sessions #" & i+1 & vbCrLf
 Next
 
+'Get user choice
 choice = InputBox(msg, "Choose sessions", "1")
 If choice = "" Then WScript.Quit
 choice = CInt(choice) - 1
 
-' Attempt to connect to the selected session or next active one
+'Attempt to connect to the selected session or next active one
 sessionFound = False
 For i = choice To UBound(sessionsList)
     On Error Resume Next
@@ -78,6 +79,7 @@ For i = choice To UBound(sessionsList)
     End If
 Next
 
+'If no session found, exit
 If Not sessionFound Then
     MsgBox "Failed to connect to the selected or next SAP sessionP."
     WScript.Quit
