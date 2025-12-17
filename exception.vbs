@@ -1,15 +1,17 @@
-'==== Dynamiczna data i folder pliku ====
+'Dynamic name and generation for exception report export
 Dim dzien, miesiac, rok, dzis
 dzien = Right("0" & Day(Date), 2)
 miesiac = Right("0" & Month(Date), 2)
 rok = Right(Year(Date), 2)
 dzis = dzien & "." & miesiac & "." & rok  ' dd.mm.yy
 
+'Display the folder path and generate unique file name
 Dim fso, folderPath, fileName, numer
 Set fso = CreateObject("Scripting.FileSystemObject")
-folderPath = "C:\Users\robert.cwenar\Documents\SAP\SAP GUI\"
+folderPath = "C:\Users\robert.cwenar\" 'Change to your target folder path
 If Right(folderPath,1) <> "\" Then folderPath = folderPath & "\"
 
+'Generate unique file name with today date
 numer = 0
 fileName = "wyjatki " & dzis & ".xls"
 Do While fso.FileExists(folderPath & fileName)
@@ -17,7 +19,7 @@ Do While fso.FileExists(folderPath & fileName)
     fileName = "wyjatki " & dzis & " (" & numer & ").xls"
 Loop
 
-'==== SAP GUI: Pobranie sesji z wyborem użytkownika ====
+'Incoming connection to SAP GUI and session
 Dim SapGuiAuto, application, connection, potentialSession, sessionsList, i, choice, session, sessionFound
 Set SapGuiAuto = GetObject("SAPGUI")
 Set application = SapGuiAuto.GetScriptingEngine
@@ -33,22 +35,22 @@ For Each connection In application.Children
 Next
 
 If i = 0 Then
-    MsgBox "Nie znaleziono zadnej aktywnej sesji SAP."
+    MsgBox "No active SAP session found in SAP."
     WScript.Quit
 End If
 
-'==== Wyświetlenie listy sesji i wybór ====
+'Display list of sessions and selection
 Dim msg
-msg = "Wybierz sesje SAP do uzycia:" & vbCrLf
+msg = "Choose the SAP session to use:" & vbCrLf
 For i = 0 To UBound(sessionsList)
-    msg = msg & i+1 & ". Sesja #" & i+1 & vbCrLf
+    msg = msg & i+1 & ". Session #" & i+1 & vbCrLf
 Next
 
-choice = InputBox(msg, "Wybor sesji", "1")
+choice = InputBox(msg, "Choose session", "1")
 If choice = "" Then WScript.Quit
 choice = CInt(choice) - 1
 
-'==== Próba połączenia z wybraną sesją lub kolejną wolną ====
+'Try to connect to the selected session or next available
 sessionFound = False
 For i = choice To UBound(sessionsList)
     On Error Resume Next
@@ -63,7 +65,7 @@ For i = choice To UBound(sessionsList)
 Next
 
 If Not sessionFound Then
-    MsgBox "Nie udało sie polaczyc z wybrana ani kolejna sesja SAP."
+    MsgBox "Failed to connect to the selected or next SAP session."
     WScript.Quit
 End If
 
@@ -72,9 +74,10 @@ If IsObject(WScript) Then
     WScript.ConnectObject application, "on"
 End If
 
-MsgBox "Polaczono z sesja SAP #" & i+1
+'Information about successful connection
+MsgBox "Connected with SAP GUI session #" & i+1
 
-'==== Start SE16N i nawigacja do raportu ====
+'Start exception report export process
 On Error Resume Next
 session.findById("wnd[0]/tbar[0]/okcd").text = "SE16N"
 session.findById("wnd[0]").sendVKey 0
@@ -93,14 +96,14 @@ session.findById("wnd[0]/usr/tblSAPLSE16NSELFIELDS_TC/ctxtGS_SELFIELDS-HIGH[3,14
 session.findById("wnd[0]/usr/tblSAPLSE16NSELFIELDS_TC/ctxtGS_SELFIELDS-HIGH[3,14]").caretPosition = 2
 session.findById("wnd[0]/tbar[1]/btn[8]").press
 
-'==== Eksport do Excela ====
+'Export report data to Excel with dynamic file name
 session.findById("wnd[0]/usr/cntlRESULT_LIST/shellcont/shell").pressToolbarContextButton "&MB_EXPORT"
 session.findById("wnd[0]/usr/cntlRESULT_LIST/shellcont/shell").selectContextMenuItem "&PC"
 session.findById("wnd[1]/usr/subSUBSCREEN_STEPLOOP:SAPLSPO5:0150/sub:SAPLSPO5:0150/radSPOPLI-SELFLAG[1,0]").select
 session.findById("wnd[1]/usr/subSUBSCREEN_STEPLOOP:SAPLSPO5:0150/sub:SAPLSPO5:0150/radSPOPLI-SELFLAG[1,0]").setFocus
 session.findById("wnd[1]/tbar[0]/btn[0]").press
 
-'==== Zapis pliku z dynamiczną nazwą ====
+'Save exported file with dynamic name
 session.findById("wnd[1]/usr/ctxtDY_PATH").text = folderPath
 session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = fileName
 session.findById("wnd[1]/usr/ctxtDY_FILENAME").caretPosition = Len(fileName)

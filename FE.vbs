@@ -1,4 +1,4 @@
-'==== DYNAMICZNA DATA I UNIKALNA NAZWA PLIKU ====
+'Dynamic file naming and generation for export
 Dim dzien, miesiac, rok, dzis
 dzien = Right("0" & Day(Date), 2)
 miesiac = Right("0" & Month(Date), 2)
@@ -7,12 +7,12 @@ dzis = dzien & "." & miesiac & "." & rok
 
 Dim fso, folderPath, numer, fileName, f, re, matches, maxNum
 Set fso = CreateObject("Scripting.FileSystemObject")
-folderPath = "C:\Users\robert.cwenar\"
+folderPath = "C:\Users\robert.cwenar\" 'Change to your target folder path
 
-' Upewnij się, że folderPath kończy się backslashem
+'Make sure folder path ends with backslash
 If Right(folderPath,1) <> "\" Then folderPath = folderPath & "\"
 
-'==== RegExp do nadawania numerów istniejącym plikom ====
+'Define regex to find existing files
 Set re = New RegExp
 re.Pattern = "ydrzewo (\d+) z d " & dzis & "\.xls"
 re.IgnoreCase = True
@@ -30,12 +30,12 @@ Next
 numer = maxNum + 1
 fileName = "ydrzewo " & numer & " z d " & dzis & ".xls"
 
-'==== START SAP GUI ====
+'Start SAP GUI scripting and connect to session
 Dim SapGuiAuto, application, connection, potentialSession, sessionsList(), i, choice, session, sessionFound
 Set SapGuiAuto = GetObject("SAPGUI")
 Set application = SapGuiAuto.GetScriptingEngine
 
-'==== Pobranie wszystkich sesji ====
+'Initialize sessions list
 ReDim sessionsList(0)
 i = 0
 For Each connection In application.Children
@@ -47,22 +47,23 @@ For Each connection In application.Children
 Next
 
 If i = 0 Then
-    MsgBox "Nie znaleziono żadnej aktywnej sesji SAP."
+    MsgBox "No active SAP session found in SAP."
+     GUI" & vbCrLf & "Please check if SAP is running and a session is active
     WScript.Quit
 End If
 
-'==== Wyświetlenie listy sesji i wybór ====
+'Display list of sessions and selection
 Dim msg
-msg = "Wybierz sesje SAP do uzycia:" & vbCrLf
+msg = "Choose the SAP session to use:" & vbCrLf
 For i = 0 To UBound(sessionsList)
     msg = msg & i+1 & ". Sesja #" & i+1 & vbCrLf
 Next
 
-choice = InputBox(msg, "Wybór sesji", "1")
+choice = InputBox(msg, "Choose session", "1")
 If choice = "" Then WScript.Quit
 choice = CInt(choice) - 1
 
-'==== Próba połączenia z wybraną sesją lub kolejną wolną ====
+'Try to connect to the selected session or next active one
 sessionFound = False
 For i = choice To UBound(sessionsList)
     On Error Resume Next
@@ -76,8 +77,9 @@ For i = choice To UBound(sessionsList)
     End If
 Next
 
+'Information if connection to session failed
 If Not sessionFound Then
-    MsgBox "Nie udało się połaczyc z wybrana ani kolejna sesja SAP."
+    MsgBox "Failed to connect to the selected or next SAP session."
     WScript.Quit
 End If
 
@@ -86,31 +88,35 @@ If IsObject(WScript) Then
     WScript.ConnectObject application, "on"
 End If
 
-MsgBox "Polaczono z sesja SAP #" & i+1
+MsgBox "Connected with SAP GUI session #" & i+1
 
-'==== EKSPORT DANYCH Z SAP ====
+'Export exception report with dynamic file name
 On Error Resume Next
 session.findById("wnd[0]").maximize
 
-' Sprawdzenie czy kontener GRID istnieje
+'Check if GRID1 exists
 If session.findById("wnd[0]/usr/cntlGRID1/shellcont/shell", False) Is Nothing Then
-    MsgBox "Nie znaleziono GRID1 w SAP. Sprawdz transakcje."
+    MsgBox "GRID1 not found in SAP. Check transactions."
     WScript.Quit
 End If
 
-
+'Choose to delete DELKZ column
 session.findById("wnd[0]/usr/cntlGRID1/shellcont/shell").setCurrentCell -1,"DELKZ"
 session.findById("wnd[0]/usr/cntlGRID1/shellcont/shell").selectColumn "DELKZ"
 session.findById("wnd[0]/tbar[1]/btn[29]").press
 
+'Choose to filter FE field
 session.findById("wnd[1]/usr/ssub%_SUBSCREEN_FREESEL:SAPLSSEL:1105/ctxt%%DYN001-LOW").text = "FE"
 session.findById("wnd[1]/usr/ssub%_SUBSCREEN_FREESEL:SAPLSSEL:1105/ctxt%%DYN001-LOW").caretPosition = 2
 session.findById("wnd[1]").sendVKey 0
 session.findById("wnd[0]/tbar[1]/btn[45]").press
 
+'Select option to export all records
 session.findById("wnd[1]/usr/subSUBSCREEN_STEPLOOP:SAPLSPO5:0150/sub:SAPLSPO5:0150/radSPOPLI-SELFLAG[1,0]").select
 session.findById("wnd[1]/usr/subSUBSCREEN_STEPLOOP:SAPLSPO5:0150/sub:SAPLSPO5:0150/radSPOPLI-SELFLAG[1,0]").setFocus
 session.findById("wnd[1]/tbar[0]/btn[0]").press
+
+'Export exception report with dynamic file name
 session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = fileName
 session.findById("wnd[1]/usr/ctxtDY_FILENAME").caretPosition = Len(fileName)
 session.findById("wnd[1]/tbar[0]/btn[0]").press

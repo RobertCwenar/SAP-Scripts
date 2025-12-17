@@ -1,4 +1,5 @@
 Sub Makro_Prio_ydrzewo4()
+    'Makro to copy data from "ydrzewo 4..." to "prio" workbook, add formulas, and process data in "Arkusz3"
 
     'Definition variables in macro
     Dim wbZrod As Workbook      'source (ydrzewo)
@@ -21,8 +22,9 @@ Sub Makro_Prio_ydrzewo4()
         If InStr(1, wb.Name, "prio", vbTextCompare) > 0 Then Set wbPRIO = wb
     Next wb
     
+    'Display error if workbooks not found
     If wbZrod Is Nothing Or wbPRIO Is Nothing Then
-        MsgBox "Nie znaleziono wymaganych plików!", vbCritical
+        MsgBox "Required files not found!", vbCritical
         Exit Sub
     End If
     
